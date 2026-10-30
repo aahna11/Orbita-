@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Routes, Route, Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useStore } from './store'; import { api } from './api';
-M = k => lazy(() => import('./pages/Misc.jsx').then(m => ({ default: m[k] })));
+const M  = k => lazy(() => import('./pages/Misc.jsx').then(m => ({ default: m[k] })));
 const Landing = lazy(() => import('./pages/Landing')), Auth = lazy(() => import('./pages/Auth')), Projects = lazy(() => import('./pages/Projects')), Board = lazy(() => import('./pages/Board')),
   Team = lazy(() => import('./pages/Team')), Activity = lazy(() => import('./pages/Activity')), Dashboard = lazy(() => import('./pages/Dashboard')), Task = lazy(() => import('./pages/Task')),
   Notifications = lazy(() => import('./pages/Notifications')), Settings = lazy(() => import('./pages/Settings')), DesignKit = lazy(() => import('./pages/DesignKit')),
