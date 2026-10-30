@@ -1,0 +1,12 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment: { MYSQL_ROOT_PASSWORD: orbita, MYSQL_DATABASE: orbita }
+    ports: ["3306:3306"]
+    volumes: ["./docs/schema.sql:/docker-entrypoint-initdb.d/schema.sql"]
+  mongo:
+    image: mongo:7
+    ports: ["27017:27017"]
+  mailpit:
+    image: axllent/mailpit
+    ports: ["8025:8025","1025:1025"]

@@ -1,0 +1,16 @@
+const routes = [['post', '/auth/signup', 'Create account and first organization', 'none'], ['post', '/auth/login', 'Log in (lockout after 5 failures)', 'none'],
+  ['post', '/auth/refresh', 'Rotate refresh cookie and get a new access token (header X-Requested-With: orbita)', 'none'], ['post', '/auth/logout', 'Log out', 'none'],
+  ['post', '/auth/forgot', 'Request a password reset email', 'none'], ['post', '/auth/reset', 'Set a new password using the reset token', 'none'],
+  ['get', '/me', 'Current user', 'user'], ['get', '/orgs', 'List my organizations', 'user'], ['post', '/orgs', 'Create an organization (you become owner)', 'user'], ['get', '/dashboard', 'Dashboard counts', 'org'], ['patch', '/orgs/current', 'Rename organization (owner, admin)', 'org'], ['delete', '/orgs/current', 'Delete organization (owner)', 'org'],
+  ['get', '/members', 'List members', 'org'], ['patch', '/members/{userId}', 'Change a member role (owner, admin)', 'org'],
+  ['get', '/invites', 'List open invites', 'org'], ['post', '/invites', 'Create an invite (owner, admin)', 'org'], ['delete', '/invites/{id}', 'Revoke an invite', 'org'], ['post', '/invites/{id}/resend', 'Resend an invite', 'org'], ['post', '/invites/accept', 'Accept an invite by token', 'user'],
+  ['get', '/projects', 'List projects', 'org'], ['post', '/projects', 'Create project (owner, admin; plan limit applies)', 'org'], ['delete', '/projects/{id}', 'Delete project', 'org'], ['get', '/projects/{id}/columns', 'Board columns', 'org'], ['get', '/projects/{id}/tasks', 'Tasks, cursor-paginated', 'org'],
+  ['post', '/tasks', 'Create task', 'org'], ['get', '/tasks/{id}', 'Get task', 'org'], ['patch', '/tasks/{id}', 'Update task (requires version; 409 on conflict)', 'org'], ['post', '/tasks/{id}/move', 'Move task (column_id, before, after, version)', 'org'], ['delete', '/tasks/{id}', 'Delete task', 'org'],
+  ['get', '/tasks/{id}/comments', 'List comments', 'org'], ['post', '/tasks/{id}/comments', 'Add comment (@emailprefix mentions notify)', 'org'],
+  ['get', '/activity', 'Activity feed (cursor, user_id)', 'org'], ['get', '/notifications', 'My notifications', 'org'], ['post', '/notifications/read-all', 'Mark all read', 'org'],
+  ['get', '/search', 'Search tasks (q, priority, assignee_id, project_id, cursor)', 'org'], ['get', '/admin/stats', 'Platform stats (platform admin)', 'user'], ['get', '/admin/orgs', 'All organizations (platform admin)', 'user'], ['get', '/health', 'Health check', 'none']];
+const paths = {};
+for (const [m, p, summary, auth] of routes) (paths[p] ??= {})[m] = { summary, tags: [p.split('/')[1]], security: auth === 'none' ? [] : [{ bearer: [] }],
+  parameters: [...(auth === 'org' ? [{ name: 'X-Org-Id', in: 'header', required: true, schema: { type: 'integer' } }] : []), ...[...p.matchAll(/{(\w+)}/g)].map(x => ({ name: x[1], in: 'path', required: true, schema: { type: 'string' } }))],
+  responses: { 200: { description: 'OK' }, '4XX': { description: 'Error: { error: { code, message, details } }' } } };
+module.exports = { routes, spec: { openapi: '3.0.3', info: { title: 'ORBITA API', version: '0.3.0' }, components: { securitySchemes: { bearer: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' } } }, paths } };

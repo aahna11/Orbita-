@@ -1,0 +1,20 @@
+process.env.JWT_SECRET = 'test'; process.env.MYSQL_URL ||= 'mysql://root:orbita@localhost:3306/orbita';
+const request = require('supertest'), app = require('../src/app'), { pool } = require('../src/db');
+const mk = async n => { const email = `${n}${Date.now()}@t.io`;
+  return { ...(await request(app).post('/auth/signup').send({ email, name: n, orgName: `Org ${n}`, password: 'Strongpass123' })).body, email }; };
+afterAll(() => pool.end());
+test('invite accept, viewer RBAC, single use, expiry, activity feed', async () => {
+  const A = await mk('own'), B = await mk('vw'), C = await mk('ex'), hA = { Authorization: `Bearer ${A.token}`, 'X-Org-Id': A.orgId };
+  const inv = (await request(app).post('/invites').set(hA).send({ email: B.email, role: 'viewer' })).body; expect(inv.token).toBeTruthy();
+  const acc = t => request(app).post('/invites/accept').set('Authorization', `Bearer ${B.token}`).send({ token: t });
+  expect((await acc(inv.token)).status).toBe(200);
+  const hB = { Authorization: `Bearer ${B.token}`, 'X-Org-Id': A.orgId };
+  expect((await request(app).get('/projects').set(hB)).status).toBe(200);
+  expect((await request(app).post('/projects').set(hB).send({ name: 'no' })).status).toBe(403);
+  expect((await acc(inv.token)).status).toBe(410);
+  const inv2 = (await request(app).post('/invites').set(hA).send({ email: C.email, role: 'member' })).body;
+  await pool.query('UPDATE invites SET expires_at=NOW()-INTERVAL 1 DAY WHERE id=?', [inv2.id]);
+  const r = await request(app).post('/invites/accept').set('Authorization', `Bearer ${C.token}`).send({ token: inv2.token });
+  expect(r.status).toBe(410); expect(r.body.error.code).toBe('INVITE_EXPIRED');
+  expect((await request(app).get('/activity').set(hA)).body.items.length).toBeGreaterThan(0);
+});

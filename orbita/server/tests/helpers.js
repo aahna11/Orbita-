@@ -1,0 +1,10 @@
+process.env.JWT_SECRET = 'test'; process.env.MYSQL_URL ||= 'mysql://root:orbita@localhost:3306/orbita'; process.env.MONGO_URL ||= 'mongodb://localhost:27017/orbita';
+const request = require('supertest'), app = require('../src/app'), { pool } = require('../src/db');
+const signup = async (n, password = 'Strongpass123') => { const email = `${n}${Date.now()}${Math.floor(Math.random() * 1e4)}@t.io`;
+  const r = await request(app).post('/auth/signup').send({ email, name: n, orgName: `Org ${n}`, password });
+  return { ...r.body, email, password, cookie: r.headers['set-cookie']?.[0]?.split(';')[0], h: { Authorization: `Bearer ${r.body.token}`, 'X-Org-Id': r.body.orgId } }; };
+const addMember = async (owner, role) => { const u = await signup(role); const inv = (await request(app).post('/invites').set(owner.h).send({ email: u.email, role })).body;
+  await request(app).post('/invites/accept').set('Authorization', `Bearer ${u.token}`).send({ token: inv.token }); return { ...u, h: { Authorization: `Bearer ${u.token}`, 'X-Org-Id': owner.orgId } }; };
+const mkBoard = async o => { const p = (await request(app).post('/projects').set(o.h).send({ name: 'P' + Date.now() })).body;
+  const cols = (await request(app).get(`/projects/${p.id}/columns`).set(o.h)).body; return { project: p, cols }; };
+module.exports = { request, app, pool, signup, addMember, mkBoard };
