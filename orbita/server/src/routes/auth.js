@@ -1,7 +1,7 @@
 const r = require('express').Router(), bcrypt = require('bcrypt'), jwt = require('jsonwebtoken'), { z } = require('zod');
 const crypto = require('crypto'), nodemailer = require('nodemailer'), { pool } = require('../db'), { err } = require('../mw');
 const sha = t => crypto.createHash('sha256').update(t).digest('hex'), isTest = () => process.env.NODE_ENV === 'test';
-const mailer = nodemailer.createTransport({ host: process.env.MAIL_HOST || 'localhost', port: 1025, secure: false });
+const mailer = require('../mailer');
 const cookies = q => Object.fromEntries((q.headers.cookie || '').split(';').map(x => x.trim().split('=')).filter(x => x[0]));
 // Refresh token: random, only its hash is stored, rotated on every use, httpOnly + SameSite=Strict cookie.
 async function issue(res, userId) { const t = crypto.randomBytes(32).toString('hex');

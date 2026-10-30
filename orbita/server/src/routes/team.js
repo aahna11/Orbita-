@@ -1,7 +1,7 @@
 const r = require('express').Router(), crypto = require('crypto'), { z } = require('zod'), nodemailer = require('nodemailer');
 const { emit } = require('../realtime'), { notify } = require('../notify'), { pool } = require('../db'), { auth, tenant, can, err, audit } = require('../mw');
 const T = [auth, tenant, audit], hash = t => crypto.createHash('sha256').update(t).digest('hex');
-const mailer = nodemailer.createTransport({ host: process.env.MAIL_HOST || 'localhost', port: 1025, secure: false });
+const mailer = require('../mailer');
 const bad = (s, p) => err(s, 400, 'VALIDATION', 'Invalid input', p.error.issues);
 const mail = async (to, org, token) => { try { await mailer.sendMail({ from: 'ORBITA <no-reply@orbita.local>', to, subject: `Join ${org} on ORBITA`,
   text: `Accept your invite: ${process.env.APP_URL || 'http://localhost:5173'}/invite/${token}` }); } catch (e) { console.warn('mail failed', e.message); } };
